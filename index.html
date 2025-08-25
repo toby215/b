@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Blog · Butterfly Lite</title>
+  <meta name="description" content="一个用 <div> 添加文章的仿 Butterfly 单文件博客" />
+  <style>
+    /* ========== 主题变量（仿 Butterfly 气质） ========== */
+    :root{
+      --bg: #f7f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #8a2be2; /* butterfly 紫 */
+      --brand-weak:#a56cf0;
+      --border: #e5e7eb;
+      --chip:#eef2ff;
+      --shadow: 0 10px 30px rgba(17, 24, 39, .08);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --radius-lg: 28px;
+      --cover-gradient: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.6));
+    }
+    .dark{
+      --bg: #0b0d13;
+      --panel: #0f1220;
+      --text: #e5e7eb;
+      --muted: #9aa0aa;
+      --brand: #a78bfa;
+      --brand-weak:#c4b5fd;
+      --border: #1f2433;
+      --chip:#151a2e;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --cover-gradient: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.75));
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Noto Sans SC, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg); color: var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+
+    /* ========== 顶部公告 & 统计 ========== */
+    .announce{
+      position:sticky; top:0; z-index:40; backdrop-filter:saturate(1.2) blur(6px);
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border-bottom:1px solid var(--border);
+      padding:10px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;
+    }
+    .announce .left{display:flex; gap:10px; align-items:center}
+    .badge{padding:4px 10px; background:var(--chip); border:1px solid var(--border); border-radius:999px; font-size:12px}
+    .muted{color: var(--muted)}
+
+    /* ========== 全屏首屏（只显示标题） ========== */
+    .hero{
+      position:relative; height:100vh; display:grid; place-items:center; overflow:hidden;
+      background: #0b1020;
+      color:#fff;
+    }
+    .hero::before{
+      content:""; position:absolute; inset:0; background: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat; filter: brightness(.65);
+    }
+    .hero::after{content:""; position:absolute; inset:0; background: var(--cover-gradient)}
+    .hero-inner{position:relative; z-index:2; text-align:center; padding:24px}
+    .site-title{font-weight:800; letter-spacing:.5px; font-size: clamp(38px, 6vw, 72px)}
+    .site-sub{margin-top:8px; font-size: clamp(14px, 2vw, 18px); opacity:.9}
+    .hero-actions{margin-top:28px; display:flex; gap:12px; justify-content:center}
+    .btn{
+      padding:10px 16px; border-radius:999px; border:1px solid color-mix(in oklab, var(--panel) 40%, transparent);
+      background: color-mix(in oklab, var(--panel) 10%, transparent); color:#fff; cursor:pointer;
+    }
+
+    /* ========== 导航 & 搜索 ========== */
+    .nav{max-width:1100px; margin:-48px auto 24px; padding:0 16px; position:relative; z-index:5}
+    .nav-bar{display:flex; gap:12px; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:12px}
+    .nav .search{flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; background: color-mix(in oklab, var(--bg) 70%, transparent); border:1px solid var(--border); border-radius:12px}
+    .nav input{flex:1; background:transparent; border:none; outline:none; color:var(--text)}
+    .nav .filters{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{padding:6px 10px; border-radius:999px; background:var(--chip); border:1px solid var(--border); cursor:pointer; font-size:12px}
+    .chip.active{outline:2px solid var(--brand); background: color-mix(in oklab, var(--chip) 70%, transparent)}
+    .right-actions{margin-left:auto; display:flex; gap:8px}
+    .toggle{padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:var(--panel); cursor:pointer}
+
+    /* ========== 布局 & 卡片 ========== */
+    .wrap{max-width:1100px; margin:0 auto; padding:0 16px 80px}
+    .grid{display:grid; gap:18px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));}
+
+    .card{display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden}
+    .cover{position:relative; aspect-ratio: 16/9; background:#111}
+    .cover img{width:100%; height:100%; object-fit:cover}
+    .cover .tagbar{position:absolute; left:12px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap}
+    .tag{font-size:12px; padding:4px 8px; border-radius:999px; background: color-mix(in oklab, var(--brand) 20%, var(--panel)); border:1px solid var(--border); color:#fff; backdrop-filter: blur(4px)}
+    .card-body{padding:14px 14px 10px}
+    .title{font-weight:700; font-size:18px; line-height:1.35}
+    .meta{margin-top:6px; font-size:12px; color:var(--muted)}
+    .excerpt{margin-top:10px; color:var(--muted)}
+    .card-foot{display:flex; align-items:center; justify-content:space-between; padding:10px 14px 14px}
+    .readbtn{padding:8px 12px; border-radius:10px; border:1px solid var(--border); background: color-mix(in oklab, var(--panel) 60%, transparent); cursor:pointer}
+
+    /* ========== 文章弹窗 ========== */
+    dialog.article{width:min(880px, 96vw); max-height: 90vh; border:none; padding:0; border-radius: var(--radius-lg); display:grid; grid-template-rows:auto 1fr; overflow:hidden; background:var(--panel); color:var(--text); box-shadow: var(--shadow)}
+    @media (max-width:640px){ dialog.article{max-height:100dvh; height:100dvh;} }
+    .dlg-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border)}
+    .dlg-body{padding:18px; overflow:auto}
+    .dlg-body .content img{max-width:100%; border-radius:12px}
+
+    /* ========== 页脚 ========== */
+    footer{padding:28px 16px; text-align:center; color:var(--muted)}
+
+    /* 小屏优化 */
+    @media (max-width:640px){ .nav{margin:-32px auto 16px} .nav-bar{flex-wrap:wrap} .right-actions{width:100%; justify-content:flex-end} }
+  </style>
+</head>
+<body>
+  <!-- 顶部公告 & 站点统计 -->
+  <div class="announce">
+    <div class="left">
+      <span class="badge">公告</span> <span>this is my blog</span>
+    </div>
+    <div class="right">
+      <span class="badge" id="stat-posts">0 篇文章</span>
+      <span class="badge" id="stat-cates">0 分类</span>
+      <span class="badge" id="stat-tags">0 标签</span>
+      <span class="badge" id="stat-words">0 字</span>
+      <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<span id="busuanzi_container_site_pv">
+  本站总访问量 <span id="busuanzi_value_site_pv"></span> 次，
+</span>
+<br>
+<span id="busuanzi_container_site_uv">
+  <div class="widget">
+  <p>📅 上次更新时间 : 2025年8月25日08:30:30</p>
+</div>
+
+
+    </div>
+  </div>
+
+  <!-- 全屏首屏：只显示标题（下滑进入博客） -->
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="site-title">效听的精神家园</div>
+      <div class="site-sub">My Blog</div>
+      <div class="hero-actions">
+        <a class="btn" href="#main">进入博客</a>
+        <button class="btn" id="toggle-theme">切换主题</button>
+      </div>
+    </div>
+  </header>
+<div>
+	<p>，，下面是文章<p>
+</div>
+  <div class="nav" id="main">
+    <div class="nav-bar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/></svg>
+        <input id="search" placeholder="搜索文章标题 / 标签 / 摘要... (Ctrl+/)" />
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="right-actions">
+        <button class="toggle" id="theme2">🌗</button>
+        <button class="toggle" id="backTop">↑ 顶部</button>
+      </div>
+    </div>
+  </div>
+  <!-- 停留时间计时器 -->
+  <div class="widget">
+    <h2>⏳ 你的阅读时间</h2>
+    <p id="stayTime">你刚刚进入本站...</p>
+  </div>
+
+  <!-- 访客设备检测 -->
+  <div class="widget">
+    <h2>💻 你的访问信息</h2>
+    <p id="deviceInfo">检测中...</p>
+  </div>
+
+  <!-- 访问成就系统 -->
+  <div class="widget">
+    <h2>🏆 访问成就</h2>
+    <p>你已经访问本站 <span id="visitCount">0</span> 次</p>
+    <p>解锁称号：<span id="achievements">暂无</span></p>
+  </div>
+
+  <script>
+    // ========== 1. 停留时间计时器 ==========
+    let seconds = 0;
+    setInterval(() => {
+      seconds++;
+      let m = Math.floor(seconds / 60);
+      let s = seconds % 60;
+      document.getElementById("stayTime").innerText = 
+        `你已经在本站停留 ${m} 分 ${s} 秒`;
+    }, 1000);
+
+    // ========== 2. 设备检测 ==========
+    function detectDevice() {
+      let ua = navigator.userAgent;
+      let device = "未知设备";
+      if (/mobile/i.test(ua)) device = "手机";
+      else device = "电脑";
+      let browser = "未知浏览器";
+      if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+      else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+      else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+      else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+      document.getElementById("deviceInfo").innerText = 
+        `你正在使用 ${device}，浏览器：${browser}`;
+    }
+    detectDevice();
+
+    // ========== 3. 访问成就系统 ==========
+    let visits = localStorage.getItem("visitCount") || 0;
+    visits++;
+    localStorage.setItem("visitCount", visits);
+    document.getElementById("visitCount").innerText = visits;
+
+    // 成就判断
+    let achievementText = "暂无";
+    if (visits >= 1 && visits < 5) achievementText = "新朋友 🌱";
+    else if (visits >= 5 && visits < 10) achievementText = "常客 👏";
+    else if (visits >= 10 && visits < 20) achievementText = "铁杆粉丝 🔥";
+    else if (visits >= 20 && visits < 50) achievementText = "超级支持者 💎";
+    else if (visits >= 50) achievementText = "传奇读者 👑";
+
+    document.getElementById("achievements").innerText = achievementText;
+  </script>
+
+
+  <!-- 卡片网格渲染区 -->
+  <main class="wrap">
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <!-- 文章弹窗 -->
+  <dialog class="article" id="dlg">
+    <div class="dlg-head">
+      <div>
+        <div class="title" id="dlg-title"></div>
+        <div class="meta" id="dlg-meta"></div>
+      </div>
+      <button class="toggle" onclick="document.getElementById('dlg').close()">关闭</button>
+    </div>
+    <div class="dlg-body">
+      <div class="content" id="dlg-content"></div>
+    </div>
+  </dialog>
+
+  <!-- ========= 用 <div class="post"> 添加文章（只需复制粘贴） =========
+    规则：
+    1) 每篇文章一个 <div class="post">，仅修改 data-* 属性与内部 .content。
+    2) data-tags 用英文逗号分隔多个标签。
+    3) 封面图非必填；不填则使用渐变占位。
+    4) 不需要改动 JS，只管加这个模块即可。
+  -->
+  <section id="posts" style="display:none">
+
+    <!-- 示例文章 1：欢迎使用 -->
+<div class="post"
+     data-id="blog-success"
+     data-title="博客搭建大成功！"
+     data-date="2025-08-20"
+     data-category="心得"
+     data-tags="博客,成功,记录"
+     data-cover="https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=1600&auto=format&fit=crop"
+     data-excerpt="经过一步步的折腾，我终于把个人博客搭建成功啦！">
+  <div class="content">
+    <p>经过几天的尝试和调试，我的 <strong>Butterfly Lite 博客</strong> 终于上线啦！</p>
+    <p>现在我可以：</p>
+    <ul>
+      <li>随时写下我的想法和记录；</li>
+      <li>发表更多文章</li>
+      <li>分享更多趣事</li>
+    </ul>
+    <p>后面我会继续更新文章，分享设计与生活点滴，也会尝试更多功能。</p>
+    <p>今天的心情只有四个字：<strong>大成功！</strong> 🚀</p>
+    <img src="https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=1200&auto=format&fit=crop" alt="庆祝成功"/>
+  </div>
+</div>
+<div class="post"
+     data-id="git-install-config"
+     data-title="Git 安装与配置：入门指南"
+     data-date="2025-08-22"
+     data-category="技术笔记"
+     data-tags="Git,GitHub,版本管理,SSH"
+     data-cover="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1600&auto=format&fit=crop"
+     data-excerpt="一步步带你完成 Git 的安装、配置、SSH 秘钥绑定，以及仓库的克隆、推送和拉取操作。">
+  <div class="content">
+    <h2>Git 是什么？</h2>
+    <p>Git 是一款常用的版本管理软件，在企业生产中用得极其广泛。对于普通用户，用得最多的当然就是 <strong>GitHub</strong> 或者 <strong>Gitee</strong> 仓库的管理啦！</p>
+
+    <h2>安装</h2>
+    <p>前往 <a href="https://git-scm.com/downloads" target="_blank">Git 官方下载页面</a>，选择您的操作系统，下载安装即可。</p>
+
+    <h2>配置</h2>
+    <p>安装完成后，打开 <code>Git Bash</code>，输入以下命令设置 GitHub 账户和邮箱：</p>
+    <pre><code class="language-bash">
+git config --global user.name "你的GitHub用户名"
+git config --global user.email "你的GitHub注册邮箱"
+    </code></pre>
+
+    <p>输入下列命令查看是否设置成功：</p>
+    <pre><code class="language-bash">
+git config user.name
+git config user.email
+    </code></pre>
+
+    <h2>本地仓库与远程仓库</h2>
+    <ul>
+      <li><strong>本地仓库</strong>：存放在电脑本地的文件夹；</li>
+      <li><strong>远程仓库</strong>：存放在 GitHub/Gitee 上的仓库。</li>
+    </ul>
+    <p>利用 Git，可以顺利地将本地仓库推送到远程仓库，或从远程仓库拉取更新，非常便捷。</p>
+
+    <h2>配置 SSH 秘钥</h2>
+    <pre><code class="language-bash">
+ssh-keygen -t rsa -C "你的GitHub注册邮箱"
+    </code></pre>
+    <p>一路回车即可，完成后在 <code>C:\Users\你的用户名\.ssh</code> 找到 <code>id_rsa.pub</code> 文件，将内容复制到 GitHub 的 <em>SSH and GPG keys</em> 页面，添加为新的 SSH key。</p>
+
+    <p>检测是否成功：</p>
+    <pre><code class="language-bash">
+ssh git@github.com
+    </code></pre>
+    <p>若出现 <code>successfully</code>，说明绑定完成。</p>
+
+    <h2>仓库克隆</h2>
+    <p>在目标文件夹中打开 Git Bash，输入：</p>
+    <pre><code class="language-bash">
+git clone git@github.com:用户名/仓库名.git
+    </code></pre>
+    <p>即可将远程仓库完整下载到本地。</p>
+
+    <h2>仓库推送</h2>
+    <ol>
+      <li>在 GitHub 创建一个新仓库（可选择是否添加 README）。</li>
+      <li>在本地初始化并提交代码：</li>
+    </ol>
+    <pre><code class="language-bash">
+git init
+git add .
+git commit -m "首次提交"
+git push
+    </code></pre>
+
+    <h2>仓库拉取</h2>
+    <p>当远程仓库被修改后，本地需要同步更新：</p>
+    <pre><code class="language-bash">
+git pull
+    </code></pre>
+    <p>这样本地与远程就保持一致，避免推送冲突。</p>
+
+    <h2>总结</h2>
+    <p>通过本教程，你已经掌握了 Git 的最基本操作：安装、配置、SSH 秘钥、仓库克隆、推送与拉取。</p>
+    <p>未来你可能会需要更多分支管理和协作的技巧，那时可以继续学习进阶的 Git 知识。</p>
+  </div>
+</div>
+<div class="post"
+     data-id="git-branch-advanced"
+     data-title="Git 分支与协作：进阶指南"
+     data-date="2025-08-23"
+     data-category="技术笔记"
+     data-tags="Git,分支,协作,版本管理,GitHub"
+     data-cover=""
+     data-excerpt="学习如何使用 Git 分支进行多人协作开发，掌握常见的分支操作、冲突解决和协作流程。">
+  <div class="content">
+    <h2>为什么需要分支？</h2>
+    <p>在团队开发中，每个人可能会同时开发不同的功能。如果大家直接在主分支 (<code>main</code>) 上提交，容易造成冲突和混乱。</p>
+    <p><strong>分支</strong> 就像是复制一份主线代码，你可以在分支上自由修改，完成后再合并回主线。</p>
+
+    <h2>常用分支命令</h2>
+    <pre><code class="language-bash">
+# 查看所有分支
+git branch
+
+# 创建新分支
+git branch feature-login
+
+# 切换到新分支
+git checkout feature-login
+
+# 创建并切换
+git checkout -b feature-login
+
+# 删除本地分支
+git branch -d feature-login
+    </code></pre>
+
+    <h2>推送与远程分支</h2>
+    <pre><code class="language-bash">
+# 推送本地分支到远程
+git push -u origin feature-login
+
+# 拉取远程分支
+git checkout -b feature-login origin/feature-login
+    </code></pre>
+
+    <h2>分支合并</h2>
+    <p>完成开发后，将功能分支合并到主分支：</p>
+    <pre><code class="language-bash">
+# 切回主分支
+git checkout main
+
+# 合并功能分支
+git merge feature-login
+    </code></pre>
+    <p>合并后建议删除功能分支，保持仓库整洁。</p>
+
+    <h2>解决冲突</h2>
+    <p>当两个分支修改了同一文件的同一位置时，合并时会产生冲突，Git 会标记冲突区域：</p>
+    <pre><code>
+<<<<<<< HEAD
+这是主分支的内容
+=======
+这是功能分支的内容
+>>>>>>> feature-login
+    </code></pre>
+    <p>手动修改为需要的内容后，再提交一次：</p>
+    <pre><code class="language-bash">
+git add 文件名
+git commit -m "解决合并冲突"
+    </code></pre>
+
+    <h2>多人协作推荐流程</h2>
+    <ol>
+      <li>从主分支 <code>main</code> 拉取最新代码。</li>
+      <li>基于最新代码新建一个功能分支。</li>
+      <li>在功能分支上开发并提交。</li>
+      <li>推送功能分支到远程，并发起 Pull Request (PR)。</li>
+      <li>代码审查通过后，合并到主分支。</li>
+    </ol>
+
+    <h2>Rebase 与 Merge</h2>
+    <p><strong>Merge</strong>：直接把分支合并，保留分支历史，日志可能较复杂。</p>
+    <p><strong>Rebase</strong>：把你的提交“平移”到主分支的最新提交之后，保持历史更整洁。</p>
+    <pre><code class="language-bash">
+# 将功能分支基于 main 分支最新提交
+git checkout feature-login
+git rebase main
+    </code></pre>
+
+    <h2>总结</h2>
+    <p>通过学习分支和协作，你可以：</p>
+    <ul>
+      <li>独立开发新功能而不影响主分支</li>
+      <li>用分支隔离不同任务</li>
+      <li>通过合并或 rebase 保持代码历史清晰</li>
+      <li>利用 PR 流程提升团队协作效率</li>
+    </ul>
+    <p>这是成为 <strong>Git 高级用户</strong> 的必经之路 🚀</p>
+  </div>
+</div>
+<div class="post"
+     data-id="git-practice"
+     data-title="Git 实战案例：从初始化到协作开发"
+     data-date="2025-08-24"
+     data-category="技术笔记"
+     data-tags="Git,GitHub,协作,案例,Pull Request"
+     data-cover="https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1600&auto=format&fit=crop"
+     data-excerpt="通过一个完整案例，演示团队如何使用 Git 和 GitHub 从初始化到 Pull Request 协作开发。">
+  <div class="content">
+    <h2>项目背景</h2>
+    <p>假设我们要开发一个简单的网站项目，团队有三个人：小明、Alice 和 Bob。目标是使用 Git 和 GitHub 进行高效协作。</p>
+
+    <h2>步骤一：初始化仓库</h2>
+    <pre><code class="language-bash">
+# 在本地创建文件夹并进入
+mkdir my-website && cd my-website
+
+# 初始化 Git 仓库
+git init
+
+# 创建一个 README 文件
+echo "# My Website" > README.md
+
+# 提交初始版本
+git add README.md
+git commit -m "初始化项目"
+    </code></pre>
+
+    <p>然后在 GitHub 创建一个远程仓库 <code>my-website</code>，把本地仓库推送上去：</p>
+    <pre><code class="language-bash">
+git remote add origin https://github.com/username/my-website.git
+git branch -M main
+git push -u origin main
+    </code></pre>
+
+    <h2>步骤二：成员克隆仓库</h2>
+    <p>Alice 和 Bob 使用 <code>git clone</code> 把仓库拉到本地：</p>
+    <pre><code class="language-bash">
+git clone https://github.com/username/my-website.git
+    </code></pre>
+
+    <h2>步骤三：开发新功能</h2>
+    <p>小明负责写首页，于是新建一个分支：</p>
+    <pre><code class="language-bash">
+git checkout -b feature-homepage
+echo "<h1>欢迎来到我的网站</h1>" > index.html
+git add index.html
+git commit -m "添加首页"
+git push -u origin feature-homepage
+    </code></pre>
+
+    <p>在 GitHub 上就能看到 <code>feature-homepage</code> 分支。</p>
+
+    <h2>步骤四：发起 Pull Request (PR)</h2>
+    <ol>
+      <li>小明进入 GitHub 仓库，点击 <code>Compare & pull request</code>。</li>
+      <li>填写描述，发起 PR 请求。</li>
+      <li>Alice 和 Bob 进行代码审查，确认没有问题后点击 <code>Merge</code>。</li>
+    </ol>
+
+    <h2>步骤五：更新本地主分支</h2>
+    <p>合并完成后，Alice 和 Bob 要同步最新代码：</p>
+    <pre><code class="language-bash">
+git checkout main
+git pull origin main
+    </code></pre>
+
+    <h2>步骤六：解决冲突</h2>
+    <p>如果 Alice 同时修改了 <code>index.html</code>，合并时可能出现冲突。解决方式：</p>
+    <ol>
+      <li>打开冲突文件，手动修改冲突区域。</li>
+      <li>保存后执行 <code>git add</code>。</li>
+      <li>再执行 <code>git commit</code> 完成冲突解决。</li>
+    </ol>
+
+    <h2>最终成果</h2>
+    <p>通过这个流程，团队实现了：</p>
+    <ul>
+      <li>使用分支隔离不同功能开发</li>
+      <li>通过 PR 进行代码审查与合并</li>
+      <li>保持主分支稳定</li>
+      <li>及时同步和解决冲突</li>
+    </ul>
+
+    <h2>总结</h2>
+    <p>这是一个最常见的 Git 协作流程：<strong>初始化 → 分支开发 → 提交 PR → 审查合并 → 更新主分支</strong>。熟悉后，你就能和团队高效协作啦 🚀。</p>
+  </div>
+</div>
+<div class="post"
+     data-id="git-faq"
+     data-title="Git 常见问题（FAQ）与最佳实践"
+     data-date="2025-08-25"
+     data-category="技术笔记"
+     data-tags="Git,FAQ,最佳实践,GitHub"
+     data-cover="https://images.unsplash.com/photo-1526378722484-bd91ca387e72?q=80&w=1600&auto=format&fit=crop"
+     data-excerpt="总结 Git 使用过程中常见的问题与解决办法，并给出最佳实践建议。">
+  <div class="content">
+    <h2>常见问题 FAQ</h2>
+
+    <h3>Q1: 忘记提交代码就切换分支怎么办？</h3>
+    <p>可以用 <code>git stash</code> 临时保存工作区：</p>
+    <pre><code class="language-bash">
+git stash
+git checkout new-branch
+git stash pop
+    </code></pre>
+
+    <h3>Q2: 不小心提交了错误的文件怎么办？</h3>
+    <p>可以使用 <code>git reset</code> 撤销：</p>
+    <pre><code class="language-bash">
+# 撤销暂存区的文件
+git reset HEAD filename
+
+# 回退到上一个提交
+git reset --hard HEAD~1
+    </code></pre>
+
+    <h3>Q3: Git 提交信息写错了怎么办？</h3>
+    <p>如果只是最后一次提交，可以修改提交信息：</p>
+    <pre><code class="language-bash">
+git commit --amend -m "新的提交信息"
+    </code></pre>
+    <p><strong>注意</strong>：如果已经推送到远程仓库，请谨慎修改，以免影响其他人。</p>
+
+    <h3>Q4: 如何回滚到某个历史版本？</h3>
+    <pre><code class="language-bash">
+# 查看提交记录
+git log
+
+# 回到指定提交
+git checkout <commit-id>
+    </code></pre>
+
+    <h3>Q5: GitHub 上分支太多怎么清理？</h3>
+    <p>删除本地分支：</p>
+    <pre><code class="language-bash">
+git branch -d branch-name
+    </code></pre>
+    <p>删除远程分支：</p>
+    <pre><code class="language-bash">
+git push origin --delete branch-name
+    </code></pre>
+
+    <h2>最佳实践</h2>
+    <ul>
+      <li><strong>使用分支</strong>：主分支保持稳定，新功能在 <code>feature-xxx</code> 分支开发。</li>
+      <li><strong>提交小而清晰</strong>：一次提交只做一件事，便于回滚和追踪。</li>
+      <li><strong>写有意义的提交信息</strong>：避免 "fix" 这种模糊的描述。</li>
+      <li><strong>定期同步远程分支</strong>：避免冲突堆积，保持本地最新。</li>
+      <li><strong>合并用 PR</strong>：不要直接推送到 <code>main</code>，通过 Pull Request 审查代码。</li>
+      <li><strong>使用 .gitignore</strong>：避免上传临时文件、日志、编译产物。</li>
+      <li><strong>定期清理分支</strong>：功能合并后删除分支，保持仓库整洁。</li>
+    </ul>
+
+    <h2>总结</h2>
+    <p>Git 功能很强大，常见问题也容易解决。掌握以上 FAQ 和最佳实践，你就能更加顺畅地管理代码、与团队协作 🚀。</p>
+  </div>
+</div>
+<div class="post"
+     data-id="git-sign up"
+     data-title="github注册教程"
+     data-date="2025-08-21"
+     data-category="技术笔记"
+     data-tags="Git,GitHub"
+     data-cover="https://images.unsplash.com/photo-1526378722484-bd91ca387e72?q=80&w=1600&auto=format&fit=crop"
+     data-excerpt="总结 Git 使用过程中常见的问题与解决办法，并给出最佳实践建议。">
+  <div class="content">
+    <p><strong>一、注册 GitHub 账号</strong></p>
+    <ul>
+      <li>准备一个常用邮箱（Gmail、Outlook、QQ 邮箱均可）。</li>
+      <li>打开官网：<a href="https://github.com" target="_blank">https://github.com</a> ，点击右上角 “Sign up”。</li>
+      <li>填写邮箱、密码、用户名，完成拼图验证。</li>
+      <li>去邮箱收取验证码，输入到 GitHub 完成验证。</li>
+      <li>选择套餐：免费版 Free 即可。</li>
+      <li>设置使用偏好，可以跳过。</li>
+      <li>注册完成后进入 GitHub 首页。</li>
+    </ul>
+
+    <p><strong>二、注册后推荐设置</strong></p>
+    <ul>
+      <li>编辑个人资料：点击头像 → Your profile → Edit profile。</li>
+      <li>设置 SSH Key，方便免密上传代码。</li>
+      <li>开启两步验证（2FA）提升安全性。</li>
+    </ul>
+
+    <p><strong>三、常见问题</strong></p>
+    <ul>
+      <li>收不到验证邮件 → 检查垃圾邮箱或换个邮箱。</li>
+      <li>用户名重复 → 换一个或在后面加数字。</li>
+      <li>密码太简单 → 必须包含大小写字母、数字和符号。</li>
+    </ul>
+
+    <p><strong>四、创建存储库（Repository）</strong></p>
+    <ul>
+      <li>登录 GitHub。</li>
+      <li>点击右上角 “+” → 选择 “New repository”。</li>
+      <li>填写仓库信息：</li>
+      <ul>
+        <li>Repository name：例如 <code>my-first-repo</code>。</li>
+        <li>Description：填写简介（选填）。</li>
+        <li>Visibility：Public（公开）或 Private（私有）。</li>
+        <li>初始化选项：可勾选 Add a README file。</li>
+      </ul>
+      <li>点击 “Create repository” 创建。</li>
+    </ul>
+
+    <p><strong>五、仓库创建完成后</strong></p>
+    <ul>
+      <li>仓库页面地址如：<code>https://github.com/用户名/my-first-repo</code>。</li>
+      <li>可以上传文件（Upload files）。</li>
+      <li>可以克隆到本地（Clone）。</li>
+      <li>可以在线新建文件（Add file → Create new file）。</li>
+    </ul>
+  </div>
+</li>
+<div class="post"
+     data-id="new-function"
+     data-title="博客新功能：访问量计数"
+     data-date="2025-09-3"
+     data-category="other"
+     data-tags="实现,新功能,关于本站"
+     data-excerpt="发现了一个好的开源工具，不蒜子！">
+  <div class="content">
+    <p>666，今天刷视频看到了一个开源工具，他是专门为个人博客的访问量打造的，我用这个代码实现了我梦寐以求的访问数量实现</p>
+    <h1>太棒的开源项目了！</h1>
+    <ul>
+      <strong>我祝不蒜子作者天天开心，感谢不蒜子的团队！</strong>
+    </ul>
+  </div>
+</div>
+
+    <!-- 你可以在此处继续粘贴更多 <div class="post"> ... -->
+
+  </section>
+
+  <footer>
+    © <span id="year"></span> · by xiaoting · Powered by Butterfly Lite
+  </footer>
+
+  <script>
+    // ========== 基础工具 ==========
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    // ========== 主题切换 ==========
+    const applyTheme = (t) => { document.documentElement.classList.toggle('dark', t==='dark'); localStorage.setItem('theme', t); }
+    const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(localStorage.getItem('theme') || (preferDark? 'dark':'light'));
+    $('#toggle-theme').onclick = () => applyTheme(document.documentElement.classList.contains('dark')? 'light':'dark');
+    $('#theme2').onclick = () => $('#toggle-theme').click();
+
+    // ========== 读取 <div class="post"> 构造成数据 ==========
+    const rawPosts = $$('#posts .post').map(p=>({
+      id: p.dataset.id?.trim() || crypto.randomUUID(),
+      title: p.dataset.title?.trim() || '未命名文章',
+      date: p.dataset.date?.trim() || new Date().toISOString().slice(0,10),
+      category: p.dataset.category?.trim() || '未分类',
+      tags: (p.dataset.tags||'').split(',').map(s=>s.trim()).filter(Boolean),
+      cover: p.dataset.cover?.trim() || '',
+      excerpt: p.dataset.excerpt?.trim() || '',
+      html: $('.content', p)?.innerHTML || ''
+    })).sort((a,b)=> b.date.localeCompare(a.date));
+
+    // ========== 站点统计 ==========
+    const stat = {
+      posts: rawPosts.length,
+      cates: new Set(rawPosts.map(p=>p.category)).size,
+      tags: new Set(rawPosts.flatMap(p=>p.tags)).size,
+      words: rawPosts.reduce((n,p)=> n + p.html.replace(/<[^>]+>/g,'').trim().length, 0)
+    };
+    $('#stat-posts').textContent = stat.posts + ' 篇文章';
+    $('#stat-cates').textContent = stat.cates + ' 分类';
+    $('#stat-tags').textContent = stat.tags + ' 标签';
+    $('#stat-words').textContent = stat.words + ' 字';
+
+    // ========== 渲染标签筛选 ==========
+    const allCates = [...new Set(rawPosts.map(p=>p.category))];
+    const allTags = [...new Set(rawPosts.flatMap(p=>p.tags))];
+    const filters = $('#filters');
+    const chips = [];
+    function addChip(label, type){
+      const el = document.createElement('button');
+      el.className = 'chip'; el.textContent = label; el.dataset.type = type; el.dataset.value = label;
+      el.onclick = ()=>{ el.classList.toggle('active'); render(); };
+      filters.appendChild(el); chips.push(el);
+    }
+    addChip('全部','all');
+    allCates.forEach(c=> addChip(c,'cate'));
+    allTags.forEach(t=> addChip('#'+t,'tag'));
+
+    // ========== 搜索快捷键 ==========
+    document.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey)&& e.key === '/'){ e.preventDefault(); $('#search').focus(); }});
+
+    // ========== 渲染卡片 ==========
+    const grid = $('#grid');
+    function cardTpl(p){
+      const tags = p.tags.map(t=>`<span class="tag">#${t}</span>`).join('');
+      const cover = p.cover
+        ? `<img src="${p.cover}" alt="${p.title}" loading="lazy">`
+        : `<div style="width:100%;height:100%;background:radial-gradient(1200px 500px at 0 0, ${getComputedStyle(document.documentElement).getPropertyValue('--brand-weak')}33, transparent);"></div>`;
+      return `
+        <article class="card" data-id="${p.id}">
+          <div class="cover"><div class="tagbar">${tags}</div>${cover}</div>
+          <div class="card-body">
+            <div class="title">${p.title}</div>
+            <div class="meta">${p.date} · ${p.category}</div>
+            <div class="excerpt">${p.excerpt}</div>
+          </div>
+          <div class="card-foot">
+            <button class="readbtn" data-id="${p.id}">阅读</button>
+            <span class="muted">ID: ${p.id}</span>
+          </div>
+        </article>`;
+    }
+
+    function currentFilters(){
+      const act = chips.filter(c=>c.classList.contains('active'));
+      const hasAll = act.some(c=>c.dataset.type==='all');
+      const cate = act.filter(c=>c.dataset.type==='cate').map(c=>c.dataset.value);
+      const tags = act.filter(c=>c.dataset.type==='tag').map(c=>c.dataset.value.slice(1));
+      const kw = $('#search').value.trim().toLowerCase();
+      return {hasAll, cate, tags, kw}
+    }
+
+    function matchPost(p, f){
+      if(!f.hasAll){ if(f.cate.length && !f.cate.includes(p.category)) return false; if(f.tags.length && !p.tags.some(t=>f.tags.includes(t))) return false; }
+      if(f.kw){
+        const s = (p.title + ' ' + p.excerpt + ' ' + p.tags.join(',')).toLowerCase();
+        if(!s.includes(f.kw)) return false;
+      }
+      return true;
+    }
+
+    function render(){
+      const f = currentFilters();
+      const list = rawPosts.filter(p=>matchPost(p,f));
+      grid.innerHTML = list.map(cardTpl).join('');
+    }
+
+    $('#search').addEventListener('input', render);
+    render();
+
+    // ========== 阅读弹窗 ==========
+    grid.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.readbtn'); if(!btn) return;
+      const id = btn.dataset.id;
+      const p = rawPosts.find(x=>x.id===id); if(!p) return;
+      $('#dlg-title').textContent = p.title;
+      $('#dlg-meta').textContent = `${p.date} · ${p.category} · ${p.tags.map(t=>'#'+t).join(' ')}`;
+      $('#dlg-content').innerHTML = p.html;
+      $('#dlg').showModal();
+      document.body.style.overflow='hidden';
+    });
+
+    // 关闭弹窗时恢复页面滚动
+    const __dlg = document.getElementById('dlg');
+    __dlg.addEventListener('close', ()=>{ document.body.style.overflow=''; });
+    __dlg.addEventListener('cancel', ()=>{ document.body.style.overflow=''; });
+
+    // ========== 返回顶部 ==========
+    $('#backTop').onclick = ()=> window.scrollTo({top:0, behavior:'smooth'});
+
+    // ========== 年份 ==========
+    $('#year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
