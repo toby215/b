@@ -145,6 +145,20 @@
         <a class="btn" href="#main">进入博客</a>
         <button class="btn" id="toggle-theme">切换主题</button>
       </div>
+		  <h2>🤖 小助手问候</h2>
+  <p id="greeting">加载中...</p>
+<script>
+  // 根据时间显示个性化问候
+  function getGreeting() {
+    const hour = new Date().getHours();
+    if(hour >= 5 && hour < 12) return "早上好！☀️ 欢迎访问博客！";
+    if(hour >= 12 && hour < 18) return "下午好！🌤 祝你有个愉快的下午！";
+    if(hour >= 18 && hour < 22) return "晚上好！🌙 放松一下，享受阅读吧！";
+    return "夜深了 🌌 注意休息哦！";
+  }
+
+  document.getElementById("greeting").innerText = getGreeting();
+</script>
     </div>
   </header>
 <div>
@@ -676,9 +690,6 @@ git push origin --delete branch-name
 
   </section>
 
-  <footer>
-    © <span id="year"></span> · by xiaoting · Powered by Butterfly Lite
-  </footer>
 
   <script>
     // ========== 基础工具 ==========
