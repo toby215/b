@@ -46,7 +46,8 @@
     /* ========== 顶部公告 & 统计 ========== */
     .announce{
       position:sticky; top:0; z-index:40; backdrop-filter:saturate(1.2) blur(6px);
-      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      background: rgba(255, 255, 255, 0.2); /* 白色，20% 不透明 */
+
       border-bottom:1px solid var(--border);
       padding:10px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;
     }
@@ -131,10 +132,6 @@
 </span>
 <br>
 <span id="busuanzi_container_site_uv">
-  <div class="widget">
-  <p>📅 上次更新时间 : 2025年8月25日08:30:30</p>
-</div>
-
 
     </div>
   </div>
@@ -151,7 +148,7 @@
     </div>
   </header>
 <div>
-	<p>，，下面是文章<p>
+	<p><p>
 </div>
   <div class="nav" id="main">
     <div class="nav-bar">
@@ -265,19 +262,24 @@
      data-date="2025-08-20"
      data-category="心得"
      data-tags="博客,成功,记录"
-     data-cover="7aa5d81b477591b31c8340ec9d5231bd.png"
+     data-cover="https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=1600&auto=format&fit=crop"
      data-excerpt="经过一步步的折腾，我终于把个人博客搭建成功啦！">
   <div class="content">
+    <h1>博客搭建大成功！</h1>
+    <ul>
+      <li>搭建博客大成功！！！</li>
+      <li>看同学的写的教程，熬了一个大夜，还是没搞定</li>
+      <li>第二天下午继续搞，但是碰上了个奇怪的问题，又搞了很久</li>
+      <li>最后终于通过咨询同学和看各种教程搞定啦，成功搭建</li>
+      <li>快乐，兴奋</li>
+    </ul>
     <p>经过几天的尝试和调试，我的 <strong>Butterfly Lite 博客</strong> 终于上线啦！</p>
     <p>现在我可以：</p>
     <ul>
-      <li>随时写下我的想法和记录；</li>
-      <li>发表更多文章</li>
-      <li>分享更多趣事</li>
-    </ul>
-    <p>后面我会继续更新文章，分享设计与生活点滴，也会尝试更多功能。</p>
-    <p>今天的心情只有四个字：<strong>大成功！</strong> 🚀</p>
-    <img src="https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=1200&auto=format&fit=crop" alt="庆祝成功"/>
+      <p>随时写下我的想法和记录；</p>
+      <p>发表更多文章</p>
+      <p>分享更多趣事</p>
+    <p>希望以后能多写文章发到这里</p>
   </div>
 </div>
 <div class="post"
@@ -668,7 +670,7 @@ git push origin --delete branch-name
     </ul>
   </div>
 </li>
-
+<div class="post"
 
     <!-- 你可以在此处继续粘贴更多 <div class="post"> ... -->
 
