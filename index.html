@@ -121,6 +121,9 @@
     <div class="left">
       <span class="badge">公告</span> <span>this is my blog</span>
     </div>
+	    <div class="left">
+      <span class="badge">版权声明！</span> <span>本博客所有文章除特别声明外，均采用 CC BY-NC-SA 4.0 许可协议。转载请注明来自 效听的精神家园！</span>
+    </div>
     <div class="right">
       <span class="badge" id="stat-posts">0 篇文章</span>
       <span class="badge" id="stat-cates">0 分类</span>
@@ -145,20 +148,7 @@
         <a class="btn" href="#main">进入博客</a>
         <button class="btn" id="toggle-theme">切换主题</button>
       </div>
-		  <h2>🤖 小助手问候</h2>
-  <p id="greeting">加载中...</p>
-<script>
-  // 根据时间显示个性化问候
-  function getGreeting() {
-    const hour = new Date().getHours();
-    if(hour >= 5 && hour < 12) return "早上好！☀️ 欢迎访问博客！";
-    if(hour >= 12 && hour < 18) return "下午好！🌤 祝你有个愉快的下午！";
-    if(hour >= 18 && hour < 22) return "晚上好！🌙 放松一下，享受阅读吧！";
-    return "夜深了 🌌 注意休息哦！";
-  }
 
-  document.getElementById("greeting").innerText = getGreeting();
-</script>
     </div>
   </header>
 <div>
@@ -177,67 +167,11 @@
       </div>
     </div>
   </div>
-  <!-- 停留时间计时器 -->
-  <div class="widget">
-    <h2>⏳ 你的阅读时间</h2>
-    <p id="stayTime">你刚刚进入本站...</p>
-  </div>
 
-  <!-- 访客设备检测 -->
-  <div class="widget">
-    <h2>💻 你的访问信息</h2>
-    <p id="deviceInfo">检测中...</p>
-  </div>
-
-  <!-- 访问成就系统 -->
-  <div class="widget">
-    <h2>🏆 访问成就</h2>
     <p>你已经访问本站 <span id="visitCount">0</span> 次</p>
-    <p>解锁称号：<span id="achievements">暂无</span></p>
-  </div>
 
   <script>
-    // ========== 1. 停留时间计时器 ==========
-    let seconds = 0;
-    setInterval(() => {
-      seconds++;
-      let m = Math.floor(seconds / 60);
-      let s = seconds % 60;
-      document.getElementById("stayTime").innerText = 
-        `你已经在本站停留 ${m} 分 ${s} 秒`;
-    }, 1000);
 
-    // ========== 2. 设备检测 ==========
-    function detectDevice() {
-      let ua = navigator.userAgent;
-      let device = "未知设备";
-      if (/mobile/i.test(ua)) device = "手机";
-      else device = "电脑";
-      let browser = "未知浏览器";
-      if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
-      else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
-      else if (ua.indexOf("Safari") !== -1) browser = "Safari";
-      else if (ua.indexOf("Edge") !== -1) browser = "Edge";
-      document.getElementById("deviceInfo").innerText = 
-        `你正在使用 ${device}，浏览器：${browser}`;
-    }
-    detectDevice();
-
-    // ========== 3. 访问成就系统 ==========
-    let visits = localStorage.getItem("visitCount") || 0;
-    visits++;
-    localStorage.setItem("visitCount", visits);
-    document.getElementById("visitCount").innerText = visits;
-
-    // 成就判断
-    let achievementText = "暂无";
-    if (visits >= 1 && visits < 5) achievementText = "新朋友 🌱";
-    else if (visits >= 5 && visits < 10) achievementText = "常客 👏";
-    else if (visits >= 10 && visits < 20) achievementText = "铁杆粉丝 🔥";
-    else if (visits >= 20 && visits < 50) achievementText = "超级支持者 💎";
-    else if (visits >= 50) achievementText = "传奇读者 👑";
-
-    document.getElementById("achievements").innerText = achievementText;
   </script>
 
 
@@ -683,10 +617,7 @@ git push origin --delete branch-name
       <li>可以在线新建文件（Add file → Create new file）。</li>
     </ul>
   </div>
-</li>
-<div class="post"
 
-    <!-- 你可以在此处继续粘贴更多 <div class="post"> ... -->
 
   </section>
 
