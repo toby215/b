@@ -615,6 +615,176 @@ git push origin --delete branch-name
       <li>可以在线新建文件（Add file → Create new file）。</li>
     </ul>
   </div>
+<div class="post"
+     data-id="py-snake"
+     data-title="python贪吃蛇游戏教学"
+     data-date="2025-09/19"
+     data-category="编程"
+     data-tags="Git,GitHub"
+     data-cover=""
+     data-excerpt="python贪吃蛇游戏源代码及讲解">
+  <div class="content">
+    <h2>python贪吃蛇游戏源代码及讲解<h2>
+    <p>今天教一下用python做一个超简单的贪吃蛇游戏</p>
+    <p>先看代码：</p>
+    <pre><code>
+import pygame
+import random
+import sys
+
+# 初始化
+pygame.init()
+pygame.mixer.init()
+
+# 游戏窗口
+WIDTH, HEIGHT = 800, 600
+CELL_SIZE = 20
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("精美贪吃蛇 Snake Game")
+
+# 颜色
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 200, 0)
+DARKGREEN = (0, 150, 0)
+RED = (220, 20, 60)
+YELLOW = (255, 215, 0)
+BG_COLOR = (30, 30, 40)
+
+# 字体
+font = pygame.font.SysFont("Microsoft YaHei", 28)
+big_font = pygame.font.SysFont("Microsoft YaHei", 60)
+
+# 音效（可替换为你自己的 mp3/wav 文件）
+eat_sound = None
+game_over_sound = None
+
+# 蛇初始化
+def reset_game():
+    snake = [(100, 100), (80, 100), (60, 100)]
+    direction = "RIGHT"
+    score = 0
+    food = spawn_food(snake)
+    return snake, direction, score, food
+
+def spawn_food(snake):
+    while True:
+        x = random.randrange(0, WIDTH // CELL_SIZE) * CELL_SIZE
+        y = random.randrange(0, HEIGHT // CELL_SIZE) * CELL_SIZE
+        if (x, y) not in snake:
+            return (x, y)
+
+def draw_snake(snake):
+    for i, (x, y) in enumerate(snake):
+        color = GREEN if i > 0 else YELLOW
+        pygame.draw.rect(screen, color, (x, y, CELL_SIZE, CELL_SIZE), border_radius=6)
+
+def draw_food(food):
+    pygame.draw.rect(screen, RED, (food[0], food[1], CELL_SIZE, CELL_SIZE), border_radius=8)
+
+def draw_score(score):
+    text = font.render(f"得分: {score}", True, WHITE)
+    screen.blit(text, (10, 10))
+
+def game_over_screen(score):
+    screen.fill(BG_COLOR)
+    over_text = big_font.render("游戏结束!", True, RED)
+    score_text = font.render(f"最终得分: {score}", True, WHITE)
+    restart_text = font.render("按 R 键重新开始 或 Q 键退出", True, YELLOW)
+
+    screen.blit(over_text, (WIDTH//2 - over_text.get_width()//2, HEIGHT//3))
+    screen.blit(score_text, (WIDTH//2 - score_text.get_width()//2, HEIGHT//2))
+    screen.blit(restart_text, (WIDTH//2 - restart_text.get_width()//2, HEIGHT//2 + 60))
+    pygame.display.flip()
+
+    if game_over_sound:
+        game_over_sound.play()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    waiting = False
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
+
+def main():
+    clock = pygame.time.Clock()
+    snake, direction, score, food = reset_game()
+    speed = 10
+
+    while True:
+        # 事件处理
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP and direction != "DOWN":
+                    direction = "UP"
+                elif event.key == pygame.K_DOWN and direction != "UP":
+                    direction = "DOWN"
+                elif event.key == pygame.K_LEFT and direction != "RIGHT":
+                    direction = "LEFT"
+                elif event.key == pygame.K_RIGHT and direction != "LEFT":
+                    direction = "RIGHT"
+
+        # 移动蛇
+        x, y = snake[0]
+        if direction == "UP":
+            y -= CELL_SIZE
+        elif direction == "DOWN":
+            y += CELL_SIZE
+        elif direction == "LEFT":
+            x -= CELL_SIZE
+        elif direction == "RIGHT":
+            x += CELL_SIZE
+
+        new_head = (x, y)
+
+        # 碰撞检测
+        if (
+            x < 0 or x >= WIDTH or y < 0 or y >= HEIGHT or new_head in snake
+        ):
+            game_over_screen(score)
+            snake, direction, score, food = reset_game()
+            continue
+
+        snake.insert(0, new_head)
+
+        # 吃食物
+        if new_head == food:
+            score += 10
+            if eat_sound:
+                eat_sound.play()
+            food = spawn_food(snake)
+            speed += 0.5
+        else:
+            snake.pop()
+
+        # 绘制
+        screen.fill(BG_COLOR)
+        draw_snake(snake)
+        draw_food(food)
+        draw_score(score)
+        pygame.display.flip()
+
+        clock.tick(speed)
+
+if __name__ == "__main__":
+    main()
+
+    <pre><code>
+    <p>好了，上面就是所有代码和注释了，复制保存为snake.py就能玩了，下面是一个视频展示！</p>
+   <video width="600" controls>
+  <source src="snake录像.mp4" type="video/mp4">
+  </div>
+
 
 
   </section>
